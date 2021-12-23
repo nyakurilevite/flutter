@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "116666290867",
+    "project_id": "iremeapp",
+    "storage_bucket": "iremeapp.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:116666290867:android:b122d4810f21833170d6c6",
+        "android_client_info": {
+          "package_name": "com.ecodier.learn"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "116666290867-afhhtpmd2n5jetqhq5mgoff90nrc50r9.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAAjP8swvt_VztObZPtlZDPx-1ji2GOJ4w"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "116666290867-afhhtpmd2n5jetqhq5mgoff90nrc50r9.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
