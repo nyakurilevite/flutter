@@ -35,7 +35,7 @@ class SplashScreenState extends State<MyHomePage> {
   Widget build(BuildContext context) {
     return Container(
         color: Colors.white,
-        child:Image(image: AssetImage('assets/tiktok.png'),width: 20,height: 20)
+        child:const Image(image: AssetImage('assets/tiktok.png'),width: 20,height: 20)
     );
   }
 }

@@ -3,12 +3,25 @@ import 'dart:ui';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
+import '../utils/bottom_navigation.dart';
 import '../services/sqlite_helper.dart';
+import '../screens/login_screen.dart';
+import '../screens/profile.dart';
+
 class HomePageScreen extends StatefulWidget {
+  final String account_id;
+   int curr_index;
+   HomePageScreen({Key? key,required this.account_id,required this.curr_index}) : super(key: key);
+
   @override
-  _HomePageState createState() => _HomePageState();
+  _HomePageState createState() => _HomePageState(this.account_id,this.curr_index);
+
+
 }
 class _HomePageState extends State<HomePageScreen> {
+  String acc_id;
+  int curr_index;
+  _HomePageState(this.acc_id,this.curr_index);
   @override
   void initState() {
     super.initState();
@@ -16,42 +29,20 @@ class _HomePageState extends State<HomePageScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        body: VideoScreen(),
-        bottomNavigationBar: BottomNavigationBar(
-          type: BottomNavigationBarType.fixed,
-          unselectedItemColor: Colors.white,
-          backgroundColor: Colors.black,
-          currentIndex: 0, // this will be set when a new tab is tapped
-          items: const [
-            BottomNavigationBarItem(
-              icon: Icon(Icons.home,size:36),
-              label: 'Home',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.search,size:36),
-              label: 'Discover',
-            ),
-            BottomNavigationBarItem(
-                icon: Icon(Icons.add,size:36),
-                label: ''
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.message,size:36),
-              label: 'Inbox',
-            ),
-            BottomNavigationBarItem(
-              icon:Icon(Icons.account_circle,size:36),
-              label: 'Me',
-            )
-          ],
-        ));
+        body: VideoScreen(account_id:acc_id),
+        bottomNavigationBar: BottomMenu(account_id:acc_id,curr_index:curr_index)
+    );
   }
 }
 class VideoScreen extends StatefulWidget {
   @override
-  _VideoScreenState createState() => _VideoScreenState();
+  _VideoScreenState createState() => _VideoScreenState(this.account_id);
+  final String account_id;
+  const VideoScreen({Key? key,required this.account_id}) : super(key: key);
 }
 class _VideoScreenState extends State<VideoScreen> {
+  String account_id;
+  _VideoScreenState(this.account_id);
   late VideoPlayerController _videoController;
   late Future<void> _initializeVideoPlayerFuture;
   final videos = [
@@ -67,11 +58,18 @@ class _VideoScreenState extends State<VideoScreen> {
     _initializeVideoPlayerFuture = _videoController.initialize();
     _videoController.play();
     _videoController.setLooping(true);
+    _getUserInfo();
     super.initState();
   }
   bool _isvideoLiked=false;
+  bool _isUserFollowed=false;
   var likedColor=Colors.white;
   int likesCount=0;
+  var followedIcon=Icons.add;
+  bool isVisible=false;
+  var getUser;
+  var _userName;
+  var _avatar;
 
 
 
@@ -90,6 +88,28 @@ class _VideoScreenState extends State<VideoScreen> {
         }
     });
   }
+
+  void followUser(){
+    setState(() {
+      _isUserFollowed=_isUserFollowed==true?false:true;
+      followedIcon=(_isUserFollowed==true)?Icons.check:followedIcon=Icons.add;
+    });
+  }
+
+  void _getUserInfo() async
+  {
+
+      getUser=await SQLHelper.getUser(this.account_id);
+      setState(() {
+      var getRecords = getUser.first;
+      print(getRecords);
+      _userName=getRecords['names'];
+      _avatar=getRecords['avatar'];
+    });
+
+  }
+
+
   @override
   void dispose() {
     _videoController.dispose();
@@ -156,31 +176,34 @@ class _VideoScreenState extends State<VideoScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            Container(
+            SizedBox(
               height: 60,
               child: Stack(
                 children: [
                   const CircleAvatar(
                       radius: 24,
                       backgroundImage: NetworkImage(
-                          'https://images.unsplash.com/photo-1611575330633-551252bafad7?crop=entropy&cs=tinysrgb&fit=crop&fm=jpg&h=200&ixlib=rb-1.2.1&q=80&w=300')),
+                          'https://images.unsplash.com/photo-1611575330633-551252bafad7?crop=entropy&cs=tinysrgb&fit=crop&fm=jpg&h=200&ixlib=rb-1.2.1&q=80&w=300')
+                  ),
                   Positioned(
                     top: 40,
-                    left: 17,
+                    left: 20,
                     child: ClipOval(
                       child: Material(
                         color: Colors.red,
                         child: InkWell(
                           splashColor: Colors.orange,
-                          child: const SizedBox(
+                          child:  SizedBox(
                               width: 16,
                               height: 16,
                               child: Icon(
-                                Icons.add,
+                                followedIcon,
                                 color: Colors.white,
-                                size: 14,
+                                size: 16,
                               )),
-                          onTap: () {},
+                          onTap: () {
+                            followUser();
+                          },
                         ),
                       ),
                     ),
@@ -203,7 +226,11 @@ class _VideoScreenState extends State<VideoScreen> {
             const SizedBox(height: 14),
             IconButton(
               icon: const Icon(Icons.comment, size: 25),
-              onPressed: () {},
+              onPressed: () {
+                setState(() {
+                  isVisible=isVisible==true?false:true;
+                });
+              },
               color: Colors.white,
             ),
           const Text(
@@ -240,29 +267,12 @@ class _VideoScreenState extends State<VideoScreen> {
           mainAxisAlignment: MainAxisAlignment.start,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            const SizedBox(height:40),
             Row(
-              children: [
-                Container(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(5),
-                    color: Colors.grey,
-                  ),
-                  padding: const EdgeInsets.fromLTRB(8, 4, 8, 4),
-                  child: Row(children: const [
-                    Icon(Icons.shopping_cart,size: 36
-                    ),
-                    Text('Shop', style: TextStyle(
-                        fontSize: 18)),
-                  ]),
-                ),
-              ],
-            ),
-            const SizedBox(height: 6),
-            Row(
-              children: const [
-                Text('@account_name', style: TextStyle(color: Colors.white,
+              children:  [
+                Text(_userName.toString(), style: const TextStyle(color: Colors.white,
                     fontSize: 18),),
-                Icon(
+                const Icon(
                   Icons.check_circle,
                   color: Colors.blue,
                 )
@@ -278,6 +288,65 @@ class _VideoScreenState extends State<VideoScreen> {
       ),
     );
   }
+
+  Widget _commentsPanel()
+  {
+    return Visibility (
+        visible: isVisible?true:false,
+        child:Container(
+          // Provide an optional curve to make the animation feel smoother.
+          margin: EdgeInsets.only(top: MediaQuery.of(context).size.height*0.2),
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.only(
+              topRight: Radius.circular(30.0),
+              topLeft: Radius.circular(30.0),
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.blueAccent,
+                blurRadius: 25.0, // soften the shadow
+                spreadRadius: 5.0, //extend the shadow
+                offset: Offset(
+                  15.0, // Move to right 10  horizontally
+                  15.0, // Move to bottom 10 Vertically
+                ),
+              )
+            ],
+          ),
+          child: ListView(
+            padding:const EdgeInsets.only(top: 10) ,
+            children:  [
+              Row(
+                children: [
+                  IconButton(
+                    icon:  const Icon(Icons.close),
+                    onPressed: () {
+                      setState(() {
+                        isVisible=isVisible==true?false:true;
+                      });
+                    },
+                    color: Colors.blue,
+                  ),
+                  const Spacer(),
+                  const Text(
+                    'Comments',
+                    style: TextStyle(
+                        color: Colors.blue,
+                        fontWeight: FontWeight.w200,
+                        fontSize: 25),
+
+                  ),
+                  Spacer(),
+                ],
+              ),
+
+
+            ],
+          ),
+        )
+    );
+  }
   @override
   Widget build(BuildContext context) {
     return Stack(
@@ -287,6 +356,7 @@ class _VideoScreenState extends State<VideoScreen> {
         _top(),
         _bottom(),
         _right(context),
+        _commentsPanel()
       ],
     );
   }

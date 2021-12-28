@@ -155,10 +155,7 @@ class _State extends State<LoginScreen> {
 
 
           Navigator.push(
-              context, MaterialPageRoute(builder: (context) => HomePageScreen(),
-              settings: RouteSettings(
-                arguments: getData['user']['account_id'],
-              )
+              context, MaterialPageRoute(builder: (context) => HomePageScreen(account_id:getData['user']['account_id'],curr_index:0),
           ));
         }
       }
