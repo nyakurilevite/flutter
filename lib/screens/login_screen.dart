@@ -13,6 +13,9 @@ import '../utils/alerts.dart';
 import '../services/sqlite_helper.dart';
 import '../services/connection_utils.dart';
 import 'package:flutter/foundation.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:internet_connection_checker/internet_connection_checker.dart';
+
 import 'package:flutter/services.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -36,29 +39,77 @@ class _State extends State<LoginScreen> {
   userAPI API_USER = userAPI();
   var _alertMessage=Alert(message:'Please wait...',type:'success');
  bool hasConnection=false;
-
-  //**************************************LOGIN WITH GOOGLE**********************************************
-  GoogleSignInAccount? _currentUser;
   String _contactText = '';
+
+  ConnectivityResult _connectionStatus = ConnectivityResult.none;
+  final Connectivity _connectivity = Connectivity();
+  late StreamSubscription _connectivitySubscription;
+  late StreamSubscription InternetSubscription;
+  int initCheck=0;
+
+
+
   @override
-  void initState() {
-    _checkConnection();
+  initState() {
     super.initState();
+    initConnectivity();
+    _connectivitySubscription =
+        _connectivity.onConnectivityChanged.listen(_updateConnectionStatus);
+
+
+    InternetSubscription=InternetConnectionChecker().onStatusChange.listen((event) {
+      final hasConnection = event==InternetConnectionStatus.connected?
+          setState(() {this.hasConnection = true;++initCheck; }):
+           setState(() {this.hasConnection = false;++initCheck;} );
+
+      if(initCheck>1 || this.hasConnection!=true) {
+        setState(() {
+          _isVisible = true;
+        });
+        _showAlert(false);
+        _alertMessage = this.hasConnection == true ? Alert(
+            message: 'You are back online', type: 'success') : Alert(
+            message: 'There is no internet connection', type: 'danger');
+      }
+    });
+
+
   }
 
-  Future<bool> _connectivity() async{
-   bool response=await ConnectionUtil.hasInternetInternetConnection();
-    return response;
+  @override
+  void dispose() {
+    _connectivitySubscription.cancel();
+    InternetSubscription.cancel();
+    super.dispose();
   }
 
-  _checkConnection() async{
-    if(await _connectivity()==false) {
-      setState(() {
-        _isVisible = true;
-      });
-      _showAlert(false);
-      _alertMessage =Alert(message: 'There is no internet connection', type: 'danger');
+
+  Future<void> initConnectivity() async {
+    late ConnectivityResult result;
+    // Platform messages may fail, so we use a try/catch PlatformException.
+    try {
+      result = await _connectivity.checkConnectivity();
+    } on PlatformException catch (e) {
+      print(e);
+      return;
     }
+
+    // If the widget was removed from the tree while the asynchronous platform
+    // message was in flight, we want to discard the reply rather than calling
+    // setState to update our non-existent appearance.
+    if (!mounted) {
+      return Future.value(null);
+    }
+
+    return _updateConnectionStatus(result);
+  }
+
+  Future<void> _updateConnectionStatus(ConnectivityResult result) async {
+    setState(() {
+      _connectionStatus = result;
+
+      print(_connectionStatus);
+    });
   }
 
 
@@ -102,10 +153,6 @@ class _State extends State<LoginScreen> {
 
     );
 
-    if (await _connectivity()==false) {
-        _checkConnection();
-      }
-    else {
       setState(() {
         _btnColor = Colors.grey;
         _isLoading = true;
@@ -185,7 +232,6 @@ class _State extends State<LoginScreen> {
         _alertMessage =
             Alert(message: 'Invalid email or password', type: 'danger');
       }
-    }
   }
 
   @override

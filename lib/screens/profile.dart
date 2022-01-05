@@ -50,25 +50,11 @@ class _State extends State<ProfileScreen> {
   //**************************************LOGIN WITH GOOGLE**********************************************
   @override
   void initState() {
-    _checkConnection();
     _getUserInfo();
     super.initState();
   }
 
-  Future<bool> _connectivity() async{
-    bool response=await ConnectionUtil.hasInternetInternetConnection();
-    return response;
-  }
 
-  _checkConnection() async{
-    if(await _connectivity()==false) {
-      setState(() {
-        _isVisible = true;
-      });
-      _showAlert(false);
-      _alertMessage =Alert(message: 'There is no internet connection', type: 'danger');
-    }
-  }
 
 
 
@@ -111,10 +97,6 @@ class _State extends State<ProfileScreen> {
 
     );
 
-    if (await _connectivity()==false) {
-      _checkConnection();
-    }
-    else {
       setState(() {
         _btnColor = Colors.grey;
         _isLoading = true;
@@ -197,7 +179,6 @@ class _State extends State<ProfileScreen> {
         _alertMessage =
             Alert(message: 'Invalid email or password', type: 'danger');
       }
-    }
   }
 
   void _getUserInfo() async
